@@ -14,3 +14,4 @@ env:
 cache:
   directories:
       - $HOME/.gradle
+sudo: false
