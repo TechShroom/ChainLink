@@ -31,7 +31,7 @@ configFile.withReader {
     project.ext.config = new ConfigSlurper().parse prop
 }
 
-version =  "${config.mc.version.mod}.${config.mod.version}"
+version = "${config.mc.version.mod}.${config.mod.version}"
 
 repositories {
     maven {
