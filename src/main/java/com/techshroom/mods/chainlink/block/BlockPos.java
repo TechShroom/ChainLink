@@ -11,6 +11,7 @@ import com.google.auto.value.AutoValue;
 import net.minecraft.block.Block;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 @AutoValue
@@ -24,15 +25,21 @@ public abstract class BlockPos {
     private static final Map<String, BlockPos> CACHE = new HashMap<>();
 
     private static final BlockPos getFromCache(int x, int y, int z,
-            World world) {
+            IBlockAccess world) {
         // TODO optimize?
-        String cacheKey = x + "|" + y + "|" + z + "|"
-                + world.getWorldInfo().getWorldName();
+        if (!(world instanceof World)) {
+            // don't even try to cache this, ChunkCache needs nothing of the
+            // sort.
+            return new AutoValue_BlockPos(x, y, z, world);
+        }
+        World w = (World) world;
+        String name = w.getWorldInfo().getWorldName();
+        String cacheKey = x + "|" + y + "|" + z + "|" + name;
         return CACHE.computeIfAbsent(cacheKey,
                 k -> new AutoValue_BlockPos(x, y, z, world));
     }
 
-    public static final BlockPos of(int x, int y, int z, World world) {
+    public static final BlockPos of(int x, int y, int z, IBlockAccess world) {
         // limit BlockPos to sensible locations
         checkArgument(MIN_EDGE <= x && x <= MAX_EDGE,
                 "x=%s is out of reasonable bounds", x);
@@ -53,7 +60,7 @@ public abstract class BlockPos {
 
     public abstract int z();
 
-    public abstract World world();
+    public abstract IBlockAccess world();
 
     public final BlockPos xpp() {
         return of(x() + 1, y(), z(), world());
