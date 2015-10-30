@@ -116,6 +116,11 @@ public class Storage {
         return Optional.ofNullable(key.cast(this.map.get(key)));
     }
 
+    public <V> V getOrFail(Key<V> key) {
+        return get(key).orElseThrow(() -> new IllegalStateException(
+                "Expected key " + key + " to be present"));
+    }
+
     public <V> V put(Key<V> key, V v) {
         Key<Object> kCast = cast(key);
         this.map.put(kCast, v);
@@ -127,6 +132,11 @@ public class Storage {
                 ? OptionalInt.of(this.intMap.get(key)) : OptionalInt.empty();
     }
 
+    public int getOrFail(IntKey key) {
+        return get(key).orElseThrow(() -> new IllegalStateException(
+                "Expected key " + key + " to be present"));
+    }
+
     public int put(IntKey key, int v) {
         return this.intMap.put(key, v);
     }
@@ -134,6 +144,11 @@ public class Storage {
     public OptionalLong get(LongKey key) {
         return this.longMap.containsKey(key)
                 ? OptionalLong.of(this.longMap.get(key)) : OptionalLong.empty();
+    }
+
+    public long getOrFail(LongKey key) {
+        return get(key).orElseThrow(() -> new IllegalStateException(
+                "Expected key " + key + " to be present"));
     }
 
     public long put(LongKey key, long v) {
@@ -146,6 +161,11 @@ public class Storage {
                 : OptionalDouble.empty();
     }
 
+    public double getOrFail(DoubleKey key) {
+        return get(key).orElseThrow(() -> new IllegalStateException(
+                "Expected key " + key + " to be present"));
+    }
+
     public double put(DoubleKey key, double v) {
         return this.doubleMap.put(key, v);
     }
@@ -154,6 +174,11 @@ public class Storage {
         return this.booleanMap.containsKey(key)
                 ? OptionalBoolean.of(this.booleanMap.get(key) == Boolean.TRUE)
                 : OptionalBoolean.empty();
+    }
+
+    public boolean getOrFail(BooleanKey key) {
+        return get(key).orElseThrow(() -> new IllegalStateException(
+                "Expected key " + key + " to be present"));
     }
 
     public boolean put(BooleanKey key, boolean v) {
