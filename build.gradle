@@ -3,22 +3,35 @@ import org.apache.tools.ant.filters.ReplaceTokens
 // This sets us up for building a forge project - you need all of these
 buildscript {
     repositories {
+        jcenter()
         mavenCentral()
+        maven {
+            url "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+        maven {
+            url "http://techshroom.github.io/downloads/maven"
+        }
         maven {
             name = "forge"
             url = "http://files.minecraftforge.net/maven"
         }
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+        classpath group: 'com.techshroom', name: 'Aversion', version: '1.0.1-SNAPSHOT'
     }
 }
 
 apply plugin: 'forge'
+apply plugin: 'aversion-apt'
+apply plugin: 'aversion-maven'
+apply plugin: 'aversion-util'
+
+util {
+    javaVersion = '1.8'
+}
+
+idea.project.languageLevel = util.javaVersion
 
 group = "com.techshroom"
 archivesBaseName = "ChainLink"
@@ -43,6 +56,25 @@ repositories {
 
 dependencies {
     compile "com.techshroom:TSModCore:${project.config.mc.version}.0"
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.0.2'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.0.2'
+    compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.3'
+    addAPTReqWComp group: 'com.google.guava', name: 'guava', version: '18.0'
+    addAPT group: 'com.google.auto.factory', name: 'auto-factory', version: '1.0-SNAPSHOT'
+    addAPT group: 'com.google.auto.service', name: 'auto-service', version: '1.0-SNAPSHOT'
+    addAPT group: 'com.google.auto.value', name: 'auto-value', version: '1.2-SNAPSHOT'
+    addAPTReq name: 'aopalliance'
+    addAPTReq name: 'asm'
+    addAPTReq name: 'auto-value'
+    addAPTReq name: 'auto-common'
+    addAPTReq name: 'cglib'
+    addAPTReq name: 'commons-collections'
+    addAPTReq name: 'commons-lang'
+    addAPTReq name: 'dagger'
+    addAPTReq name: 'javawriter'
+    addAPTReq name: 'javax.inject'
+    addAPTReq name: 'velocity'
 
     testCompile 'junit:junit:4.11'
 }
@@ -56,12 +88,18 @@ minecraft {
     }
 }
 
+ext.replaceTokens = [
+    'VERSION': config.mod.version,
+    'MC_VERSION': config.mc.version,
+    'FORGE_VERSION': config.forge.version,
+    'ID': config.mod.id,
+    'NAME': config.mod.name
+];
+
 task updateVersion(type: Copy) {
     from(sourceSets.main.java.srcDirs)
     into 'build/sources/java'
-    filter(ReplaceTokens, tokens: [
-        'VERSION': version
-    ])
+    filter(ReplaceTokens, tokens: project.replaceTokens)
 }
 
 compileJava.dependsOn updateVersion
@@ -74,11 +112,7 @@ processResources {
     // Replace properties in all files
     from(sourceSets.main.resources.srcDirs) {
         include '**.info'
-        filter(ReplaceTokens, tokens: [
-            'VERSION': config.mod.version,
-            'MC_VERSION': config.mc.version,
-            'FORGE_VERSION': config.forge.version
-        ])
+        filter(ReplaceTokens, tokens: project.replaceTokens)
     }
     // Copy everything else
     from(sourceSets.main.resources.srcDirs) {
