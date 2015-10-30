@@ -373,7 +373,7 @@ public final class ChainUtil {
     }
 
     public static void throwing(Throwable t) {
-        ChainLink.STORE.get(ChainLinkKeys.LOGGER).get().throwing(t);
+        ChainLink.STORE.getOrFail(ChainLinkKeys.LOGGER).throwing(t);
         if (t instanceof RuntimeException) {
             throw (RuntimeException) t;
         } else {
