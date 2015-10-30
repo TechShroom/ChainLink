@@ -3,6 +3,8 @@ package com.techshroom.mods.chainlink;
 import com.techshroom.mods.chainlink.util.Storage;
 
 import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.Mod.EventHandler;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 
 @Mod(version = ChainLink.VERSION, modid = ChainLink.ID, name = ChainLink.NAME)
 public final class ChainLink {
@@ -19,6 +21,11 @@ public final class ChainLink {
 
     {
         INSTANCE = this;
+    }
+    
+    @EventHandler
+    public void onPreInit(FMLPreInitializationEvent e) {
+        STORE.put(ChainLinkKeys.LOGGER, e.getModLog());
     }
 
 }
