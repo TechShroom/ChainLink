@@ -11,6 +11,7 @@ import com.techshroom.mods.chainlink.ChainLink;
 import com.techshroom.mods.chainlink.ChainLinkKeys;
 import com.techshroom.mods.chainlink.te.TileEntityReplaceMe;
 
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
@@ -34,6 +35,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraftforge.event.world.BlockEvent;
 
 public class BlockChainLink extends BlockContainer {
 
@@ -55,6 +57,14 @@ public class BlockChainLink extends BlockContainer {
 
     private static final Map<BlockPos, MirrorData> mirrorDataMap =
             new HashMap<>();
+
+    @SubscribeEvent
+    public void onBlockDestroyedSomewhere(BlockEvent.BreakEvent e) {
+        BlockPos broken = BlockPos.of(e.x, e.y, e.z, e.world);
+        if (isMirroring(broken)) {
+            mirrorDataMap.remove(mirrorDataMap);
+        }
+    }
 
     /**
      * N.B. Also performs a sanity check that the mirror is still valid.
@@ -87,24 +97,21 @@ public class BlockChainLink extends BlockContainer {
 
     @Override
     public void onBlockAdded(World world, int x, int y, int z) {
-        BlockPos pos = BlockPos.of(x, y, z, world);
-        if (isMirroring(pos)) {
-            pos.getBlock().onBlockAdded(world, x, y, z);
-        }
+        // We add ourselves.
+        super.onBlockAdded(world, x, y, z);
     }
 
     @Override
     public void breakBlock(World world, int x, int y, int z, Block b,
             int meta) {
-        BlockPos pos = BlockPos.of(x, y, z, world);
-        if (isMirroring(pos)) {
-            pos.getBlock().breakBlock(world, x, y, z, b, meta);
-        }
+        // We break ourselves.
+        super.breakBlock(world, x, y, z, b, meta);
     }
 
     @Override
     public boolean onBlockEventReceived(World world, int x, int y, int z,
             int eventId, int eventData) {
+        // IDK. Do we pass block events?
         BlockPos pos = BlockPos.of(x, y, z, world);
         if (isMirroring(pos)) {
             return pos.getBlock().onBlockEventReceived(world, x, y, z, eventId,
@@ -121,10 +128,7 @@ public class BlockChainLink extends BlockContainer {
 
     @Override
     public boolean getBlocksMovement(IBlockAccess world, int x, int y, int z) {
-        BlockPos pos = BlockPos.of(x, y, z, world);
-        if (isMirroring(pos)) {
-            return pos.getBlock().getBlocksMovement(world, x, y, z);
-        }
+        // piston pushing depends on us, not the source.
         return super.getBlocksMovement(world, x, y, z);
     }
 
@@ -136,16 +140,14 @@ public class BlockChainLink extends BlockContainer {
 
     @Override
     public float getBlockHardness(World world, int x, int y, int z) {
-        BlockPos pos = BlockPos.of(x, y, z, world);
-        if (isMirroring(pos)) {
-            return pos.getBlock().getBlockHardness(world, x, y, z);
-        }
+        // our block hardness is the same for all
         return super.getBlockHardness(world, x, y, z);
     }
 
     @Override
     public int getMixedBrightnessForBlock(IBlockAccess world, int x, int y,
             int z) {
+        // brightness depends on the block we're viewing (two-way portal)
         BlockPos pos = BlockPos.of(x, y, z, world);
         if (isMirroring(pos)) {
             return pos.getBlock().getMixedBrightnessForBlock(world, x, y, z);
@@ -156,6 +158,7 @@ public class BlockChainLink extends BlockContainer {
     @Override
     public boolean shouldSideBeRendered(IBlockAccess world, int x, int y, int z,
             int side) {
+        // depends on block we're viewing
         BlockPos pos = BlockPos.of(x, y, z, world);
         if (isMirroring(pos)) {
             return pos.getBlock().shouldSideBeRendered(world, x, y, z, side);
@@ -166,15 +169,13 @@ public class BlockChainLink extends BlockContainer {
     @Override
     public boolean isBlockSolid(IBlockAccess world, int x, int y, int z,
             int side) {
-        BlockPos pos = BlockPos.of(x, y, z, world);
-        if (isMirroring(pos)) {
-            return pos.getBlock().isBlockSolid(world, x, y, z, side);
-        }
+        // our solidity is not mirrored
         return super.isBlockSolid(world, x, y, z, side);
     }
 
     @Override
     public IIcon getIcon(IBlockAccess world, int x, int y, int z, int side) {
+        // our icon depends on the block we're viewing
         BlockPos pos = BlockPos.of(x, y, z, world);
         if (isMirroring(pos)) {
             return pos.getBlock().getIcon(world, x, y, z, side);
@@ -186,6 +187,7 @@ public class BlockChainLink extends BlockContainer {
     public void addCollisionBoxesToList(World world, int x, int y, int z,
             AxisAlignedBB mask, @SuppressWarnings("rawtypes") List list,
             Entity collider) {
+        // collision box depends on block we're viewing
         BlockPos pos = BlockPos.of(x, y, z, world);
         if (isMirroring(pos)) {
             pos.getBlock().addCollisionBoxesToList(world, x, y, z, mask, list,
@@ -198,6 +200,7 @@ public class BlockChainLink extends BlockContainer {
     @Override
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World world, int x,
             int y, int z) {
+        // collision box depends on block we're viewing
         BlockPos pos = BlockPos.of(x, y, z, world);
         if (isMirroring(pos)) {
             return pos.getBlock().getCollisionBoundingBoxFromPool(world, x, y,
@@ -209,6 +212,7 @@ public class BlockChainLink extends BlockContainer {
     @Override
     public AxisAlignedBB getSelectedBoundingBoxFromPool(World world, int x,
             int y, int z) {
+        // collision box depends on block we're viewing
         BlockPos pos = BlockPos.of(x, y, z, world);
         if (isMirroring(pos)) {
             return pos.getBlock().getSelectedBoundingBoxFromPool(world, x, y,
@@ -227,7 +231,7 @@ public class BlockChainLink extends BlockContainer {
     @Override
     public void randomDisplayTick(World world, int x, int y, int z,
             Random random) {
-        // so random.
+        // Pinkie Pie, you are so random.
         BlockPos pos = BlockPos.of(x, y, z, world);
         if (isMirroring(pos)) {
             pos.getBlock().randomDisplayTick(world, x, y, z, random);
@@ -239,134 +243,135 @@ public class BlockChainLink extends BlockContainer {
     @Override
     public void onBlockDestroyedByPlayer(World world, int x, int y, int z,
             int meta) {
-        // TODO Auto-generated method stub
+        // Destruction is not mirrored.
         super.onBlockDestroyedByPlayer(world, x, y, z, meta);
     }
 
     @Override
     public void onNeighborBlockChange(World world, int x, int y, int z,
             Block neighbor) {
-        // TODO Auto-generated method stub
-        super.onNeighborBlockChange(world, x, y, z, neighbor);
-    }
-
-    @Override
-    public int tickRate(World world) {
-        // TODO Auto-generated method stub
-        return super.tickRate(world);
-    }
-
-    @Override
-    public int quantityDropped(Random random) {
-        // TODO Auto-generated method stub
-        return super.quantityDropped(random);
-    }
-
-    @Override
-    public Item getItemDropped(int meta, Random random, int fortune) {
-        // TODO Auto-generated method stub
-        return super.getItemDropped(meta, random, fortune);
+        // block change is mirrored.
+        BlockPos pos = BlockPos.of(x, y, z, world);
+        if (isMirroring(pos)) {
+            pos.getBlock().onNeighborBlockChange(world, x, y, z, neighbor);
+        } else {
+            super.onNeighborBlockChange(world, x, y, z, neighbor);
+        }
     }
 
     @Override
     public float getPlayerRelativeBlockHardness(EntityPlayer player,
             World world, int x, int y, int z) {
-        // TODO Auto-generated method stub
+        // Use our hardness, we want to destroy at the same rate.
         return super.getPlayerRelativeBlockHardness(player, world, x, y, z);
     }
 
     @Override
     public void dropBlockAsItemWithChance(World world, int x, int y, int z,
             int meta, float chance, int fortune) {
-        // TODO Auto-generated method stub
+        // We drop ourselves.
         super.dropBlockAsItemWithChance(world, x, y, z, meta, chance, fortune);
     }
 
     @Override
     protected void dropBlockAsItem(World world, int x, int y, int z,
             ItemStack itemIn) {
-        // TODO Auto-generated method stub
+        // We drop ourselves.
         super.dropBlockAsItem(world, x, y, z, itemIn);
     }
 
     @Override
     public void dropXpOnBlockBreak(World world, int x, int y, int z,
             int amount) {
-        // TODO Auto-generated method stub
+        // We drop ourselves.
         super.dropXpOnBlockBreak(world, x, y, z, amount);
     }
 
     @Override
     public int damageDropped(int meta) {
-        // TODO Auto-generated method stub
+        // We drop ourselves.
         return super.damageDropped(meta);
     }
 
     @Override
     public float getExplosionResistance(Entity exploder) {
-        // TODO Auto-generated method stub
+        // We have a set resistance.
         return super.getExplosionResistance(exploder);
     }
 
     @Override
     public MovingObjectPosition collisionRayTrace(World world, int x, int y,
             int z, Vec3 startVec, Vec3 endVec) {
-        // TODO Auto-generated method stub
-        return super.collisionRayTrace(world, x, y, z, startVec, endVec);
+        // Collision based on mirrored block
+        BlockPos pos = BlockPos.of(x, y, z, world);
+        if (isMirroring(pos)) {
+            return pos.getBlock().collisionRayTrace(world, x, y, z, startVec,
+                    endVec);
+        } else {
+            return super.collisionRayTrace(world, x, y, z, startVec, endVec);
+        }
     }
 
     @Override
     public void onBlockDestroyedByExplosion(World world, int x, int y, int z,
             Explosion explosionIn) {
-        // TODO Auto-generated method stub
+        // Keep destruction the same here.
         super.onBlockDestroyedByExplosion(world, x, y, z, explosionIn);
     }
 
     @Override
     public boolean canReplace(World world, int x, int y, int z, int side,
             ItemStack itemIn) {
-        // TODO Auto-generated method stub
+        // Placements against us are handled by us
         return super.canReplace(world, x, y, z, side, itemIn);
     }
 
     @Override
     public int getRenderBlockPass() {
-        // TODO Auto-generated method stub
+        // our RBP.
         return super.getRenderBlockPass();
     }
 
     @Override
     public boolean canPlaceBlockOnSide(World world, int x, int y, int z,
             int side) {
-        // TODO Auto-generated method stub
+        // block placement handled by us.
         return super.canPlaceBlockOnSide(world, x, y, z, side);
     }
 
     @Override
     public boolean canPlaceBlockAt(World world, int x, int y, int z) {
-        // TODO Auto-generated method stub
+        // block placement handled by us.
         return super.canPlaceBlockAt(world, x, y, z);
     }
 
     @Override
     public boolean onBlockActivated(World world, int x, int y, int z,
             EntityPlayer player, int side, float subX, float subY, float subZ) {
-        // TODO Auto-generated method stub
-        return super.onBlockActivated(world, x, y, z, player, side, subX, subY,
-                subZ);
+        // activation is handled by mirror
+        // SPECIAL CASE: open our gui with no mirror
+        BlockPos pos = BlockPos.of(x, y, z, world);
+        if (isMirroring(pos)) {
+            return pos.getBlock().onBlockActivated(world, x, y, z, player, side,
+                    subX, subY, subZ);
+        } else {
+            // TODO: open our GUI
+            return super.onBlockActivated(world, x, y, z, player, side, subX,
+                    subY, subZ);
+        }
     }
 
     @Override
     public void onEntityWalking(World world, int x, int y, int z,
             Entity entityIn) {
-        // TODO Auto-generated method stub
+        // walking is a physical interaction, handled by us
         super.onEntityWalking(world, x, y, z, entityIn);
     }
 
     @Override
     public int onBlockPlaced(World world, int x, int y, int z, int side,
             float subX, float subY, float subZ, int meta) {
-        // TODO Auto-generated method stub
+        // we handle placement for now
         return super.onBlockPlaced(world, x, y, z, side, subX, subY, subZ,
                 meta);
     }
@@ -374,53 +379,58 @@ public class BlockChainLink extends BlockContainer {
     @Override
     public void onBlockClicked(World world, int x, int y, int z,
             EntityPlayer player) {
-        // TODO Auto-generated method stub
+        // TODO: mirror click data?
         super.onBlockClicked(world, x, y, z, player);
     }
 
     @Override
     public void velocityToAddToEntity(World world, int x, int y, int z,
             Entity entityIn, Vec3 velocity) {
-        // TODO Auto-generated method stub
+        // add velocity! not.
         super.velocityToAddToEntity(world, x, y, z, entityIn, velocity);
     }
 
     @Override
     public void setBlockBoundsBasedOnState(IBlockAccess world, int x, int y,
             int z) {
-        // TODO Auto-generated method stub
+        // our bounds must be set here.
         super.setBlockBoundsBasedOnState(world, x, y, z);
     }
 
     @Override
     public int getBlockColor() {
-        // TODO Auto-generated method stub
+        // block color must be done by us.
         return super.getBlockColor();
     }
 
     @Override
     public int getRenderColor(int meta) {
-        // TODO Auto-generated method stub
+        // our render color is for only us.
         return super.getRenderColor(meta);
     }
 
     @Override
     public int colorMultiplier(IBlockAccess world, int x, int y, int z) {
-        // TODO Auto-generated method stub
+        // WOMBO COMBO
         return super.colorMultiplier(world, x, y, z);
     }
 
     @Override
     public int isProvidingWeakPower(IBlockAccess world, int x, int y, int z,
             int side) {
-        // TODO Auto-generated method stub
-        return super.isProvidingWeakPower(world, x, y, z, side);
+        // heck if i know. D --> i only provide STRONG power
+        BlockPos pos = BlockPos.of(x, y, z, world);
+        if (isMirroring(pos)) {
+            return pos.getBlock().isProvidingWeakPower(world, x, y, z, side);
+        } else {
+            return super.isProvidingWeakPower(world, x, y, z, side);
+        }
     }
 
     @Override
     public boolean canProvidePower() {
-        // TODO Auto-generated method stub
-        return super.canProvidePower();
+        // uhhh....sure.
+        return true;
     }
 
     @Override

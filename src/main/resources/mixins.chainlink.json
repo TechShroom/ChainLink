@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "minVersion": "0.2",
+    "package": "com.techshroom.mods.chainlink.mixins",
+    "refmap": "mixins.chainlink.refmap.json",
+    "mixins": [
+    ],
+    "server": [
+    ],
+    "client": [
+    ]
+}
+

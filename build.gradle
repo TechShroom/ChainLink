@@ -52,6 +52,10 @@ repositories {
         name 'snapshots'
         url 'https://oss.sonatype.org/content/repositories/snapshots/'
     }
+    maven {
+        name 'spongepowered'
+        url 'https://repo.spongepowered.org/maven/'
+    }
 }
 
 dependencies {
@@ -60,6 +64,7 @@ dependencies {
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.0.2'
     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
     compile group: 'com.google.code.gson', name: 'gson', version: '2.3'
+    compile group: 'org.spongepowered', name: 'mixin', version: '0.4.6-SNAPSHOT'
     addAPTReqWComp group: 'com.google.guava', name: 'guava', version: '18.0'
     addAPT group: 'com.google.auto.factory', name: 'auto-factory', version: '1.0-SNAPSHOT'
     addAPT group: 'com.google.auto.service', name: 'auto-service', version: '1.0-SNAPSHOT'
@@ -119,3 +124,38 @@ processResources {
         include 'assets/**/*.*'
     }
 }
+
+// mix dat all in
+ext {
+    mixinSrg = new File(project.buildDir, 'tmp/mixins/mixins.srg')
+    mixinRefMap = new File(project.buildDir, "tmp/mixins/mixins.chainlink.refmap.json")
+}
+compileJava {
+    options.compilerArgs += [
+            '-Xlint:-processing',
+            "-AoutSrgFile=${project.mixinSrg.canonicalPath}",
+            "-AoutRefMapFile=${project.mixinRefMap.canonicalPath}",
+            "-AreobfSrgFile=${project.file('build/srgs/mcp-srg.srg').canonicalPath}"
+    ]
+}
+// Copy the current srgs to the build dir so the user doesn't have to go hunting for them
+task copySrgs(type: Copy, dependsOn: 'genSrgs') {
+    from project.plugins.getPlugin('forge').delayedFile('{SRG_DIR}')
+
+    include '**/*.srg'
+    into 'build/srgs'
+}
+
+setupDecompWorkspace.dependsOn copySrgs
+setupDevWorkspace.dependsOn copySrgs
+compileJava.dependsOn copySrgs
+// Configure reobfuscation for mixins
+reobf.doFirst {
+    if (project.mixinSrg.exists()) {
+        addExtraSrgFile project.mixinSrg
+    }
+}
+jar {
+    from project.mixinRefMap
+}
+
